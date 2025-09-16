@@ -1,4 +1,4 @@
-# 📚 BookWise Reservation System
+#  BookWise Reservation System
 
 BookWise is a robust resource reservation system built with Spring Boot, supporting role-based access control using JWT authentication. It supports two user roles:
 
