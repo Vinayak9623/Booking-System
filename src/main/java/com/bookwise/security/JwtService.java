@@ -10,9 +10,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,8 +25,6 @@ public class JwtService {
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-
-        // Only include role names (strings), not full Role entities
         claims.put("roles", user.getRoles()
                 .stream()
                 .map(Role::getUserRole)
@@ -78,5 +74,15 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    public List<String> getRoleFromToken(String token){
+        Claims claims = extractAllClaims(token);
+        Object roles = claims.get("roles");
+        if(roles instanceof List<?>){
+            return ((List<?>) roles).stream().map(String::valueOf).collect(Collectors.toList());
+        }
+        return List.of();
+    }
+
 }
 

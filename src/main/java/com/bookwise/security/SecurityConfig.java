@@ -35,19 +35,10 @@ public class SecurityConfig {
                                         "/swagger-ui.html",
                                         "/v3/api-docs/**",
                                         "/v3/api-docs.yaml",
-                                        "/user/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/master/getResource/**", "/api/master/getResources")
-                        .hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/master/createResource", "/api/master/deleteResource/**")
-                        .hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/master/createReservation").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/master/getReservations", "/api/master/reservation/**")
-                        .hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/master/deleteReservation/**")
-                        .hasRole("ADMIN")
-                        .requestMatchers("/api/master/role", "/api/master/registerUser")
+                                        "/user/auth/**")
                         .permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest()
+                        .authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

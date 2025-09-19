@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import java.util.UUID;
 
 public interface MasterService {
-    ResponseEntity<?> createRole(RoleRequest request);
-    ResponseEntity<?> createUser(UserRequest request);
+    public ResponseEntity<?> createRole(RoleRequest request, String authHeader);
+    ResponseEntity<?> createUser(UserRequest request,String authHeader);
     ResponseEntity<?> createOrUpdateResource(ResourceRequest request);
     ResponseEntity<?> getResourceById(UUID id);
     ResponseEntity<?> getResourceList(int page ,int size,String sortfield,String sortDir);

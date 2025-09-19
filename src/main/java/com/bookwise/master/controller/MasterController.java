@@ -19,13 +19,13 @@ public class MasterController {
     private MasterService service;
 
     @PostMapping("/role")
-    public ResponseEntity<?> createRole(@RequestBody RoleRequest request){
-        return service.createRole(request);
+    public ResponseEntity<?> createRole(@RequestBody RoleRequest request,@RequestHeader("Authorization") String authHeader){
+        return service.createRole(request,authHeader);
     }
 
     @PostMapping("/registerUser")
-    public ResponseEntity<?> createUser(@RequestBody UserRequest request){
-        return service.createUser(request);
+    public ResponseEntity<?> createUser(@RequestBody UserRequest request,@RequestHeader("Authorization") String authHeader){
+        return service.createUser(request,authHeader);
     }
 
     @PostMapping("/createResource")

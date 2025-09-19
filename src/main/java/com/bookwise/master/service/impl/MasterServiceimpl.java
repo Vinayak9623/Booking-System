@@ -19,6 +19,7 @@ import com.bookwise.master.repository.ResourceRepository;
 import com.bookwise.master.repository.RoleRepository;
 import com.bookwise.master.repository.UserRepository;
 import com.bookwise.master.service.MasterService;
+import com.bookwise.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,10 +30,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.nio.file.AccessDeniedException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,13 +43,24 @@ public class MasterServiceimpl implements MasterService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Override
-    public ResponseEntity<?> createRole(RoleRequest request) {
+    public ResponseEntity<?> createRole(RoleRequest request, String authHeader) {
         var response=new ApiResponse<>();
+        String token=authHeader.replace("Bearer ","");
+        List<String> role1 = jwtService.getRoleFromToken(token);
+        try {
+            if(!role1.contains("ADMIN")){
+               throw new AccessDeniedException("Only ADMIN can acces this service");
+            }
+        }catch (Exception e){
+            response.responseMethod(HttpStatus.UNAUTHORIZED.value(), "You are not autjorzied",null,null);
+           return ResponseEntity.ok(response);
+        }
         Role role;
         role=Objects.nonNull(request.id())?
-                roleRepository.findById(request.id()).orElseThrow(()-> new RuntimeException("Role not found with given Id"+request.id()))
+                roleRepository.findByUserRole(request.userRole()).orElseThrow(()-> new RuntimeException("Role not found with given Id"+request.id()))
                 :new Role();
         role.setUserRole(request.userRole());
         role.setIsActive(request.isActive());
@@ -74,8 +84,19 @@ public class MasterServiceimpl implements MasterService {
     }
 
     @Override
-    public ResponseEntity<?> createUser(UserRequest request) {
+    public ResponseEntity<?> createUser(UserRequest request,String authHeader) {
         var response=new ApiResponse<>();
+        String token=authHeader.replace("Bearer ","");
+        String email = jwtService.extractUsername(token);
+        Set<Role> role1 = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found")).getRoles();
+
+        boolean isAdmin = role1.stream().anyMatch(x -> "ADMIN".equalsIgnoreCase(x.getUserRole()));
+        if (!isAdmin) {
+            response.responseMethod(HttpStatus.UNAUTHORIZED.value(), "Access denied for user role", null, null);
+            return ResponseEntity.ok(response);
+        }
+
         User user;
         if(request.id()==null){
             user = new User();
@@ -83,12 +104,23 @@ public class MasterServiceimpl implements MasterService {
             user.setEmail(request.email());
             user.setPassword(passwordEncoder.encode(request.password()));
 
-            if(!request.roleId().isEmpty()){
-                Set<Role> roles=request.roleId().stream()
+            Set<Role> set=new HashSet<>();
+            if(request.roleName()!=null && !request.roleName().isEmpty()){
+                Set<Role> roles=request.roleName().stream()
                         .map(role->roleRepository
-                                .findById(role).orElseThrow(()->new RuntimeException("Role not found with given Id")))
+                                .findByUserRole(role).orElseThrow(()->new RuntimeException("Role not found with given Id")))
                         .collect(Collectors.toSet());
                 user.setRoles(roles);
+            }
+            else {
+                String defaultUserRole="USER";
+                if("vinayak@gmail.com".equalsIgnoreCase(request.email())){
+                    defaultUserRole="ADMIN";
+                }
+
+                Role role = roleRepository.findByUserRole(defaultUserRole).orElseThrow(() -> new RuntimeException("Role not found "));
+                set.add(role);
+                user.setRoles(set);
             }
             user.setMobileNumber(request.mobileNumber());
             response.responseMethod(HttpStatus.CREATED.value(), "User creted successfully",null,null);
@@ -99,7 +131,7 @@ public class MasterServiceimpl implements MasterService {
             user.setName(request.name());
             user.setEmail(request.email());
             user.setPassword(passwordEncoder.encode(request.password()));
-            Set<Role> roles =request.roleId().stream().map(role->roleRepository.findById(role)
+            Set<Role> roles =request.roleName().stream().map(role->roleRepository.findByUserRole(role)
                             .orElseThrow(()->new RuntimeException("Role not found with given Id")))
                     .collect(Collectors.toSet());
             user.setRoles(roles);

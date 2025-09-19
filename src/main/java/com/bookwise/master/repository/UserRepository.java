@@ -1,5 +1,6 @@
 package com.bookwise.master.repository;
 
+import com.bookwise.master.entity.Role;
 import com.bookwise.master.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -8,4 +9,5 @@ import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+    Optional<Role> findRolesByEmail(String email);
 }

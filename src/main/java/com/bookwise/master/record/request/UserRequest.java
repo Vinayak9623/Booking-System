@@ -9,10 +9,11 @@ public record UserRequest(
         String name,
         String email,
         String password,
-        Set<UUID> roleId,
+        Set<String> roleName,
         String mobileNumber
 ) {
     public UserRequest {
-        if (roleId == null) roleId = new HashSet<>();
+        if (roleName == null) roleName = new HashSet<>();
+
     }
 }

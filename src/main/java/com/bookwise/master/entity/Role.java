@@ -24,7 +24,7 @@ public class Role extends BaseEntity {
 
     @Column(unique = true)
     @NotNull(message = "Role can not be null" )
-    private String UserRole;
+    private String userRole;
     private Boolean isActive;
     @ManyToMany(mappedBy = "roles")
     private List<User> users=new ArrayList<>();
