@@ -14,6 +14,7 @@ import com.bookwise.master.record.request.RoleRequest;
 import com.bookwise.master.record.request.UserRequest;
 import com.bookwise.master.record.response.ReservationResponse;
 import com.bookwise.master.record.response.ResourceResponse;
+import com.bookwise.master.record.response.UserResponse;
 import com.bookwise.master.repository.ReservationRepository;
 import com.bookwise.master.repository.ResourceRepository;
 import com.bookwise.master.repository.RoleRepository;
@@ -142,6 +143,73 @@ public class MasterServiceimpl implements MasterService {
         userRepository.save(user);
         return ResponseEntity.ok(response);
     }
+
+    @Override
+    public ResponseEntity<?> getUserList(int page, int size, String sortfield, String sortDir) {
+        var response = new ApiResponse<>();
+
+        try {
+            // Sorting
+            Sort sort = sortDir.equalsIgnoreCase("asc")
+                    ? Sort.by(sortfield).ascending()
+                    : Sort.by(sortfield).descending();
+
+            Pageable pageable = PageRequest.of(page, size, sort);
+            Page<User> userPage = userRepository.findAll(pageable);
+
+            // Map User -> UserResponse
+            List<UserResponse> responseList = userPage.stream()
+                    .map(user -> {
+                        // Get first role name or empty string if no roles
+                        String roleName = user.getRoles().stream()
+                                .findFirst()
+                                .map(Role::getUserRole)
+                                .orElse("");
+
+                        return new UserResponse(
+                                user.getId(),
+                                user.getName(),
+                                user.getMobileNumber(),
+                                user.getEmail(),
+                                roleName,
+                                user.getCreatedAt(),
+                                user.getUpdatedAt()
+                        );
+                    })
+                    .toList();
+
+            // Build paginated result
+            var result = new PaginatedResult<>(
+                    responseList,
+                    userPage.getNumber(),
+                    userPage.getSize(),
+                    userPage.getTotalElements(),
+                    userPage.getTotalPages(),
+                    userPage.isLast()
+            );
+
+            // Set API response
+            response.responseMethod(
+                    HttpStatus.OK.value(),
+                    "Resources fetched successfully",
+                    result,
+                    null
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace(); // optional: log the exception
+            response.responseMethod(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Failed to fetch users",
+                    null,
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
     @Override
     public ResponseEntity<?> createOrUpdateResource(ResourceRequest request) {

@@ -28,6 +28,13 @@ public class MasterController {
         return service.createUser(request,authHeader);
     }
 
+
+    @GetMapping("/getUsers")
+    public ResponseEntity<?> getUserList(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5")
+    int size, @RequestParam(defaultValue = "name") String sortfield, @RequestParam(defaultValue = "asc") String sortDir) {
+        return service.getUserList(page, size, sortfield, sortDir);
+    }
+
     @PostMapping("/createResource")
     public ResponseEntity<?> createResource(@RequestBody ResourceRequest request) {
         return service.createOrUpdateResource(request);

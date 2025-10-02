@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface MasterService {
     public ResponseEntity<?> createRole(RoleRequest request, String authHeader);
     ResponseEntity<?> createUser(UserRequest request,String authHeader);
+    ResponseEntity<?> getUserList(int page ,int size,String sortfield,String sortDir);
     ResponseEntity<?> createOrUpdateResource(ResourceRequest request);
     ResponseEntity<?> getResourceById(UUID id);
     ResponseEntity<?> getResourceList(int page ,int size,String sortfield,String sortDir);
