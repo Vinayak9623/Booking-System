@@ -1,6 +1,7 @@
 package com.bookwise.master.exception;
 
 import com.bookwise.common.ErrorResponse;
+import com.bookwise.master.exception.customeEx.ReservationConflictException;
 import com.bookwise.master.exception.customeEx.ReservationNotFound;
 import com.bookwise.master.exception.customeEx.ResourceNotFound;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,5 +33,15 @@ public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFound ex,
         error.setPath(request.getRequestURI());
         error.setTimestamp(LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(ReservationConflictException.class)
+    public ResponseEntity<ErrorResponse> handleReservationConflictException(ReservationConflictException ex, HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse();
+        error.setStatus(HttpStatus.CONTINUE.value());
+        error.setMessage(ex.getMessage());
+        error.setPath(request.getRequestURI());
+        error.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }

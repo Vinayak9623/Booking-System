@@ -2,10 +2,8 @@ package com.bookwise.master.service.impl;
 
 import com.bookwise.common.ApiResponse;
 import com.bookwise.common.PaginatedResult;
-import com.bookwise.master.entity.Reservation;
-import com.bookwise.master.entity.Resource;
-import com.bookwise.master.entity.Role;
-import com.bookwise.master.entity.User;
+import com.bookwise.master.entity.*;
+import com.bookwise.master.exception.customeEx.ReservationConflictException;
 import com.bookwise.master.exception.customeEx.ReservationNotFound;
 import com.bookwise.master.exception.customeEx.ResourceNotFound;
 import com.bookwise.master.record.request.ReservationRequest;
@@ -328,25 +326,41 @@ public class MasterServiceimpl implements MasterService {
     public ResponseEntity<?> createOrUpdateReservation(ReservationRequest request) {
         var response = new ApiResponse<>();
         Reservation reservation;
-
         reservation = request.id() != null
                 ? reservationRepository.findById(request.id())
                 .orElseThrow(() -> new ReservationNotFound("Reservation not found"))
                 : new Reservation();
-
         Resource resource = resourceRepository.findById(request.resourceId())
-                .orElseThrow(() -> new ReservationNotFound("Reservation not found"));
+                .orElseThrow(() -> new ReservationNotFound("Resource not found"));
 
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        boolean overlap = reservationRepository.existsByResourceIdAndStatusAndTimeOverlap(
+                request.resourceId(),
+                ReservationStatus.CONFIRMED,
+                request.startTime(),
+                request.endTime()
+        );
+
+        boolean changingToConfirmed = request.status() == ReservationStatus.CONFIRMED;
+        boolean selfConflict = reservation.getId() != null && overlap &&
+                (reservation.getStatus() != ReservationStatus.CONFIRMED || changingToConfirmed);
+        if (overlap && changingToConfirmed) {
+            response.responseMethod(
+                    HttpStatus.CONFLICT.value(),
+                    "Resource is already booked for the selected time range",
+                    null,
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
         reservation.setResource(resource);
         reservation.setUser(user);
         reservation.setStatus(request.status());
         reservation.setPrice(request.price());
         reservation.setStartTime(request.startTime());
         reservation.setEndTime(request.endTime());
-
         Reservation saved = reservationRepository.save(reservation);
 
         ReservationResponse reservationResponse = new ReservationResponse(
@@ -360,10 +374,14 @@ public class MasterServiceimpl implements MasterService {
                 saved.getCreatedAt(),
                 saved.getUpdatedAt()
         );
-        String message = request.id() == null ? "Reservation created successfully" : "Reservation updated successfully";
+        String message = request.id() == null
+                ? "Reservation created successfully"
+                : "Reservation updated successfully";
+
         response.responseMethod(HttpStatus.CREATED.value(), message, reservationResponse, null);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
 
     @Override
     public ResponseEntity<?> getReservationById(UUID id) {
