@@ -1,9 +1,6 @@
 package com.bookwise.master.controller;
 
-import com.bookwise.master.record.request.ReservationRequest;
-import com.bookwise.master.record.request.ResourceRequest;
-import com.bookwise.master.record.request.RoleRequest;
-import com.bookwise.master.record.request.UserRequest;
+import com.bookwise.master.record.request.*;
 import com.bookwise.master.service.MasterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -71,6 +68,11 @@ public class MasterController {
     int size, @RequestParam(defaultValue = "startTime") String sortfield, @RequestParam(defaultValue = "asc") String sortDir) {
         return service.getReservationList(page, size, sortfield, sortDir);
 
+    }
+
+    @PostMapping("/checkAvailability")
+    public ResponseEntity<?> checkAvailablity(@RequestBody AvailabilityRequest  request){
+        return service.checkAvailabilityForReservation(request);
     }
 
     @DeleteMapping("/deleteReservation/{id}")

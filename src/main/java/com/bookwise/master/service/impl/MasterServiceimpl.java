@@ -3,13 +3,9 @@ package com.bookwise.master.service.impl;
 import com.bookwise.common.ApiResponse;
 import com.bookwise.common.PaginatedResult;
 import com.bookwise.master.entity.*;
-import com.bookwise.master.exception.customeEx.ReservationConflictException;
 import com.bookwise.master.exception.customeEx.ReservationNotFound;
 import com.bookwise.master.exception.customeEx.ResourceNotFound;
-import com.bookwise.master.record.request.ReservationRequest;
-import com.bookwise.master.record.request.ResourceRequest;
-import com.bookwise.master.record.request.RoleRequest;
-import com.bookwise.master.record.request.UserRequest;
+import com.bookwise.master.record.request.*;
 import com.bookwise.master.record.response.ReservationResponse;
 import com.bookwise.master.record.response.ResourceResponse;
 import com.bookwise.master.record.response.UserResponse;
@@ -437,6 +433,24 @@ public class MasterServiceimpl implements MasterService {
         );
 
         response.responseMethod(HttpStatus.OK.value(), "Reservations fetched successfully", result, null);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<?> checkAvailabilityForReservation(AvailabilityRequest request) {
+        var response=new ApiResponse<>();
+        boolean isOverlap = reservationRepository
+                .existsByResourceIdAndStatusAndTimeOverlap
+                        (request.resourceId()
+                                , request.status()
+                                , request.startTime()
+                                , request.endTime());
+
+        if(isOverlap){
+            response.responseMethod(HttpStatus.OK.value(),"Resource is alredy book for given time",null,null);
+            return ResponseEntity.ok(response);
+        }
+        response.responseMethod(HttpStatus.OK.value(), "Congrats you can reserve your booking as per your conveniant time",null,null);
         return ResponseEntity.ok(response);
     }
 

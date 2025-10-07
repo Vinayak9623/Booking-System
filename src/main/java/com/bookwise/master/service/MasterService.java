@@ -1,9 +1,6 @@
 package com.bookwise.master.service;
 
-import com.bookwise.master.record.request.ReservationRequest;
-import com.bookwise.master.record.request.ResourceRequest;
-import com.bookwise.master.record.request.RoleRequest;
-import com.bookwise.master.record.request.UserRequest;
+import com.bookwise.master.record.request.*;
 import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
@@ -19,5 +16,6 @@ public interface MasterService {
     ResponseEntity<?> createOrUpdateReservation(ReservationRequest request);
     ResponseEntity<?> getReservationById(UUID id);
     ResponseEntity<?> getReservationList(int page, int size, String sortField, String sortDir);
+    ResponseEntity<?> checkAvailabilityForReservation(AvailabilityRequest  request);
     ResponseEntity<?> deleteReservation(UUID id);
 }
